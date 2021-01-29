@@ -1,6 +1,6 @@
 {
     "name":"@ijstech/vm",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Virtual Machine plugin",
     "author": "https://ijs.network",
     "license": "MIT",
