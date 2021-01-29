@@ -18,8 +18,8 @@ function getLocalPackage(name){
     return {
         rootPath: path,
         default: package,
-        plugin: package.plugin,
-        middleware: package.middleware
+        plugin: package._plugin,
+        middleware: package._middleware
     }
 }
 async function loadPlugins(vm, plugins, options){        
