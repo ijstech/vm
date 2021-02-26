@@ -94,7 +94,15 @@ class VM {
             global.Plugins = {};
             global.require = function(module) {};
             global.registerComponent = function(){};
-            function referenceToObject(obj) {
+            function referenceFunction(obj){
+                return function(...args){
+                    if (obj.async)  
+                        return obj.ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))                                    
+                    else     
+                        return obj.ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
+                }
+            }
+            function referenceToObject(obj) {                
                 if(obj.constructor.name === 'Reference') {
                     obj = obj.copySync();
                 };
@@ -102,13 +110,7 @@ class VM {
                 for (let v in obj) {
                     if(typeof(obj[v]) != 'undefined') {
                         if(obj[v].type === 'func') {
-                            result[v] = function (...args) {        
-                                if (obj[v].async)  
-                                    result = obj[v].ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))                                    
-                                else     
-                                    result = obj[v].ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
-                                return result;
-                            }
+                            result[v] = referenceFunction(obj[v]);
                         } 
                         else if(obj[v].type === 'obj'){
                             result[v] = referenceToObject(obj[v].ref)
