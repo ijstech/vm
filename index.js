@@ -55,7 +55,12 @@ class VM {
         }
         else{
             return this.cpuTime;
-        }
+        };
+    };
+    functionToReference(obj){
+        return new Ivm.Reference(function (...args) {
+            return obj(...args);
+        });
     };
     objectToReference(obj) {
         let result = {};
@@ -63,9 +68,7 @@ class VM {
             if(obj.hasOwnProperty(v)) {
                 if(typeof obj[v] === 'function') {
                     result[v] = {
-                        ref: new Ivm.Reference(function (...args) {
-                            return obj[v](...args);
-                        }), 
+                        ref: this.functionToReference(obj[v]), 
                         type: 'func',
                         async: obj['$$' + v]?true:false
                     };
@@ -97,13 +100,13 @@ class VM {
             function referenceFunction(obj){
                 return function(...args){
                     if (obj.async){  
-                        return obj.ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))
+                        return obj.ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
                     }
                     else{     
                         return obj.ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
                     };
                 }
-            }
+            };
             function referenceToObject(obj) {                
                 if(obj.constructor.name === 'Reference') {
                     obj = obj.copySync();
