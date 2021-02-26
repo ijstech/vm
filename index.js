@@ -21,7 +21,7 @@ function getLocalPackage(name){
         plugin: package._plugin,
         middleware: package._middleware
     };
-}
+};
 async function loadPlugins(vm, plugins, options){        
     if (Array.isArray(plugins)){
         for (let i = 0; i < plugins.length; i ++){                    
@@ -33,7 +33,7 @@ async function loadPlugins(vm, plugins, options){
             };
         };
     };
-}
+};
 class VM {
     constructor(options) {            
         this.memoryLimit = options && options.ramLimit != undefined? options.ramLimit: 128;        
@@ -210,7 +210,7 @@ class VM {
             delete this.compiledScript;
             delete this.context;
             delete this;
-        }
+        };
     };
 };
 module.exports = VM;
