@@ -51,7 +51,7 @@ class VM {
     };
     getCpuTime() {
         if(this.isolate){
-            return (this.isolate.cpuTime[0] + this.isolate.cpuTime[1] / 1e9) * 1000
+            return (this.isolate.cpuTime[0] + this.isolate.cpuTime[1] / 1e9) * 1000;
         }
         else{
             return this.cpuTime;
@@ -73,7 +73,7 @@ class VM {
                 else if(typeof obj[v] === 'object'){
                     result[v] = {
                         ref: this.objectToReference(obj[v]), 
-                        type: 'obj'}                    
+                        type: 'obj'};
                 }
                 else{
                     result[v] = obj[v];
@@ -96,10 +96,12 @@ class VM {
             global.registerComponent = function(){};
             function referenceFunction(obj){
                 return function(...args){
-                    if (obj.async)  
-                        return obj.ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))                                    
-                    else     
+                    if (obj.async){  
+                        return obj.ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))
+                    }
+                    else{     
                         return obj.ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
+                    };
                 }
             }
             function referenceToObject(obj) {                
@@ -113,11 +115,12 @@ class VM {
                             result[v] = referenceFunction(obj[v]);
                         } 
                         else if(obj[v].type === 'obj'){
-                            result[v] = referenceToObject(obj[v].ref)
+                            result[v] = referenceToObject(obj[v].ref);
                         }
-                        else
+                        else{
                             result[v] = obj[v];
-                    }
+                        };
+                    };
                 };
                 return result;
             };
