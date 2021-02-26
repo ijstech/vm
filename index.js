@@ -105,7 +105,7 @@ class VM {
                     else{     
                         return obj.ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
                     };
-                }
+                };
             };
             function referenceToObject(obj) {                
                 if(obj.constructor.name === 'Reference') {
