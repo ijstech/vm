@@ -8,12 +8,12 @@ function getLocalPackage(name){
     let package;
     let path;
     try{
-        package = require(name)
+        package = require(name);
         path = Path.dirname(require.resolve(name + '/package.json'));
     }
     catch(err){
-        package = require(RootPath + '/node_modules/' + name)
-        path = Path.dirname(require.resolve(RootPath + '/node_modules/' + name + '/package.json'))
+        package = require(RootPath + '/node_modules/' + name);
+        path = Path.dirname(require.resolve(RootPath + '/node_modules/' + name + '/package.json'));
     }       
     return {
         rootPath: path,
@@ -27,9 +27,9 @@ async function loadPlugins(vm, plugins, options){
         for (let i = 0; i < plugins.length; i ++){                    
             let name = plugins[i];
             let pack = getLocalPackage(name);            
-            let func = pack.plugin || pack.default
+            let func = pack.plugin || pack.default;
             if (typeof(func) == 'function'){                
-                func(vm, null, options)
+                func(vm, null, options);
             }
         }    
     }
@@ -43,9 +43,9 @@ class VM {
         this.token = options && options.token?options.token:'';
         this.setupContext();                
         if (options.plugins)
-            loadPlugins(this, options.plugins, options)
+            loadPlugins(this, options.plugins, options);
         if (options && options.script)
-            this.injectScript(options.script)            
+            this.injectScript(options.script); 
     }
     getCpuTime() {
         if(this.isolate)
@@ -60,7 +60,7 @@ class VM {
                 if(typeof obj[v] === 'function') {
                     result[v] = {
                         ref: new Ivm.Reference(function (...args) {
-                            return obj[v](...args)
+                            return obj[v](...args);
                         }), 
                         type: 'func',
                         async: obj['$$' + v]?true:false
@@ -78,11 +78,10 @@ class VM {
     }
     setupContext() {        
         this.context = this.isolate.createContextSync();        
-        let jail = this.context.global
+        let jail = this.context.global;
         jail.setSync('_ivm', Ivm);
         jail.setSync('global', jail.derefInto());        
-        // if (this.logging)
-            jail.setSync('_console', this.objectToReference(vmConsole(this)));                
+        jail.setSync('_console', this.objectToReference(vmConsole(this)));                
         let script = this.isolate.compileScriptSync('new ' +  function () {
             let ivm = global._ivm;            
             delete global._ivm;            
@@ -96,17 +95,17 @@ class VM {
                 let result = {};
                 for (let v in obj) {
                     if(typeof(obj[v]) != 'undefined') {
-                        if(obj[v]['type'] === 'func') {
+                        if(obj[v].type === 'func') {
                             result[v] = function (...args) {        
                                 if (obj[v].async)  
-                                    result = obj[v]['ref'].applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))                                    
+                                    result = obj[v].ref.applySyncPromise(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()))                                    
                                 else     
-                                    result = obj[v]['ref'].applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
+                                    result = obj[v].ref.applySync(undefined, args.map(arg => new ivm.ExternalCopy(arg).copyInto()));
                                 return result;
                             }
                         } 
-                        else if(obj[v]['type'] === 'obj')
-                            result[v] = referenceToObject(obj[v]['ref'])
+                        else if(obj[v].type === 'obj')
+                            result[v] = referenceToObject(obj[v].ref)
                         else
                             result[v] = obj[v];
                     }
@@ -119,11 +118,11 @@ class VM {
             global.console = {
                 log: function(...args){      
                     if (console)          
-                        console.log(JSON.stringify(args))
+                        console.log(JSON.stringify(args));
                 },
                 dir: function(...args){
                     if (console)
-                        console.dir(JSON.stringify(args))
+                        console.dir(JSON.stringify(args));
                 }
             }            
             global.referenceToObject = referenceToObject;            
@@ -170,28 +169,28 @@ class VM {
             if (typeof(context) == 'object') 
                 return await context.copy()
             else
-                return context
+                return context;
         }
-        catch(err){}
+        catch(err){};
     }
     async execute() {
         let self = this;
         clearTimeout(this.timeLimitTimer);
         this.timeLimitTimer = setTimeout(function(){
             self.destroy();
-        }, this.timeLimit)
-        let result = this.compiledScript.runSync(this.context, {})
+        }, this.timeLimit);
+        let result = this.compiledScript.runSync(this.context, {});
         return result;
     }
     async eval(script){           
-        const fn = await this.context.eval(script, { reference: true })
+        const fn = await this.context.eval(script, { reference: true });
         let self = this;        
         let result = await fn.result.apply(undefined, [], {result: { promise: true } });
     }
     destroy() {        
         clearTimeout(this.timeLimitTimer);
         if (this.isolate){
-            this.cpuTime = (this.isolate.cpuTime[0] + this.isolate.cpuTime[1] / 1e9) * 1000
+            this.cpuTime = (this.isolate.cpuTime[0] + this.isolate.cpuTime[1] / 1e9) * 1000;
             this.isolate.dispose();
             delete this.isolate;
             if (this.compiledScript)

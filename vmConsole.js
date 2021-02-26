@@ -3,17 +3,17 @@ module.exports = function(vm){
         log: function(args) {
             if (vm.logging) {
                 try{
-                    console.log.apply(null, JSON.parse(args))
+                    console.log.apply(null, JSON.parse(args));
                 }
-                catch(err){}                
+                catch(err){};                
             }
         },
         dir: function(args) {
             if (vm.logging) {
                 try{
-                    console.dir.apply(null, JSON.parse(args))
+                    console.dir.apply(null, JSON.parse(args));
                 }
-                catch(err){}                
+                catch(err){};
             }
         }
     }
