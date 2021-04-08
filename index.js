@@ -201,10 +201,10 @@ class VM {
         let result = this.compiledScript.runSync(this.context, {});
         return result;
     };
-    async eval(script){           
-        const fn = await this.context.eval(script, { reference: true });
-        let self = this;        
-        let result = await fn.result.apply(undefined, [], {result: { promise: true } });
+    async eval(script){
+        let fn = await this.context.eval(script, { reference: true });
+        let result = await fn.apply(undefined, [], {result: { promise: true } });
+        return result;
     };
     destroy() {        
         clearTimeout(this.timeLimitTimer);
