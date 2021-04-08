@@ -1,11 +1,11 @@
 {
     "name":"@ijstech/vm",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "description": "Virtual Machine plugin",
     "author": "https://ijs.network",
     "license": "MIT",
     "dependencies": {
-        "isolated-vm": "3.3.7"
+        "isolated-vm": "4.0.0"
     },
     "repository": {
         "type": "git",
