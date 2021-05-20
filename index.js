@@ -3,7 +3,25 @@ const Fs = require('fs');
 const vmConsole = require('./vmConsole');
 const Path = require('path');
 const RootPath = process.cwd();
-
+const EventEmitter = function(){
+    return {
+        events: {},
+        emit(event, ...args) {
+            (this.events[event] || []).forEach(function(cb){
+                try{
+                    cb(...args)
+                }
+                catch(err){}
+            })
+        },
+        on(event, cb) {
+            this.events[event] = this.events[event] || [];
+            this.events[event].push(cb);
+            return () =>
+                (this.events[event] = this.events[event].filter(e => e !== cb))
+        }
+    }
+}
 function getLocalPackage(name){
     let package;
     let path;
@@ -22,11 +40,11 @@ function getLocalPackage(name){
         middleware: package._middleware
     };
 };
-async function loadPlugins(vm, plugins, options){        
+async function loadPlugins(vm, plugins, options){
     if (Array.isArray(plugins)){
         for (let i = 0; i < plugins.length; i ++){                    
             let name = plugins[i];
-            let pack = getLocalPackage(name);            
+            let pack = getLocalPackage(name);
             let func = pack.plugin || pack.default;
             if (typeof(func) == 'function'){                
                 func(vm, null, options);
@@ -41,7 +59,8 @@ class VM {
         this.logging = options && options.logging != undefined? options.logging: false;
         this.isolate = new Ivm.Isolate({memoryLimit: this.memoryLimit});
         this.token = options && options.token?options.token:'';
-        this.setupContext();                
+        this.setupContext(); 
+        this.events = EventEmitter();
         if (options.plugins){
             loadPlugins(this, options.plugins, options);
         };
@@ -85,17 +104,23 @@ class VM {
         };
         return new Ivm.Reference(result);
     };
-    setupContext() {        
+    setupContext() {
         this.context = this.isolate.createContextSync();        
-        let jail = this.context.global;
+        let jail = this.context.global;        
         jail.setSync('_ivm', Ivm);
         jail.setSync('global', jail.derefInto());        
-        jail.setSync('_console', this.objectToReference(vmConsole(this)));                
+        jail.setSync('_console', this.objectToReference(vmConsole(this)));
         let script = this.isolate.compileScriptSync('new ' +  function () {
             let ivm = global._ivm;            
-            delete global._ivm;            
+            delete global._ivm;        
+            global.module = {
+                paths: {}
+            };                
+            global.exports = {};
             global.Plugins = {};
-            global.require = function(module) {};
+            global.require = function(module) {
+                return global.module.paths[module.toLowerCase()];
+            };
             global.registerComponent = function(){};
             function referenceFunction(obj){
                 return function(...args){
@@ -143,7 +168,7 @@ class VM {
             };
             global.referenceToObject = referenceToObject;            
         })        
-        script.runSync(this.context);        
+        script.runSync(this.context);
     };
     injectGlobalObject(name, obj, script){
         this.context.global.setSync(name, this.objectToReference(obj));
@@ -153,7 +178,7 @@ class VM {
         }`);
         s.runSync(this.context);
     };
-    registerPlugin(name, obj, script){        
+    registerPlugin(name, obj, script){
         this.context.global.setSync('_Plugins_' + name, this.objectToReference(obj));
         let s = this.isolate.compileScriptSync(`new function () {              
             global.Plugins["${name}"] = referenceToObject(global._Plugins_${name});
@@ -206,18 +231,21 @@ class VM {
         let result = await fn.apply(undefined, [], {result: { promise: true } });
         return result;
     };
-    destroy() {        
+    on(event, cb){
+        return this.events.on(event, cb);
+    };
+    destroy() {
         clearTimeout(this.timeLimitTimer);
         if (this.isolate){
             this.cpuTime = (this.isolate.cpuTime[0] + this.isolate.cpuTime[1] / 1e9) * 1000;
             this.isolate.dispose();
             delete this.isolate;
-            if (this.compiledScript){
+            if (this.compiledScript)
                 this.compiledScript.release();
-            };
             delete this.compiledScript;
             delete this.context;
-            delete this;
+            this.events.emit('destroy');
+            delete this.events;
         };
     };
 };
