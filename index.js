@@ -110,15 +110,21 @@ class VM {
         jail.setSync('_ivm', Ivm);
         jail.setSync('global', jail.derefInto());        
         jail.setSync('_console', this.objectToReference(vmConsole(this)));
+        jail.setSync('_resolveRelative', function(base, path){            
+            return Path.resolve(Path.dirname(base), path)
+        })
         let script = this.isolate.compileScriptSync('new ' +  function () {
             let ivm = global._ivm;            
             delete global._ivm;        
             global.module = {
+                exports: {},
                 paths: {}
             };                
             global.exports = {};
             global.Plugins = {};
             global.require = function(module) {
+                if (module.indexOf('./') >= 0 && global.$CURR_PATH)
+                    module = global._resolveRelative(global.$CURR_PATH, module);
                 return global.module.paths[module.toLowerCase()];
             };
             global.registerComponent = function(){};
@@ -154,7 +160,7 @@ class VM {
             };
             if (global._console){
                 var console = referenceToObject(global._console);
-            };
+            };                
             delete global._console;
             global.console = {
                 log: function(...args){      
@@ -190,8 +196,11 @@ class VM {
     injectScript(code) {
         this.isolate.compileScriptSync(code).runSync(this.context);
     };
-    injectModule(filePath) {
-        this.injectScript(Fs.readFileSync(filePath).toString());
+    injectModule(filePath, plugin) {
+        if (plugin)
+            this.injectScript(Fs.readFileSync(filePath).toString() + '\n' + `global.Plugins["${plugin}"] = module.exports`);
+        else
+            this.injectScript(Fs.readFileSync(filePath).toString());
     };
     compileScript(script) {
         this.script = script;
